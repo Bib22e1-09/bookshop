@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+<h1 class="fw-bold" style="color:#198754; font-size:2rem;">Каталог книг</h1>
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for book in books %}
+    <div class="col">
+        <a href="{% url 'book_detail' book.pk %}" style="text-decoration: none; color: inherit;">
+            <div class="card h-100">
+                <img 
+                  src="{% if book.cover %}{{ book.cover.url }}{% else %}{% static 'images/no_cover.png' %}{% endif %}" 
+                  class="card-img-top" 
+                  style="height: 300px; object-fit: cover;" 
+                  alt="{{ book.title }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ book.title }}</h5>
+                    <p class="card-text">
+                        <span class="badge bg-primary">Цена: {{ book.price }} руб.</span>
+                        <span class="badge bg-success">В наличии: {{ book.stock }}</span>
+                    </p>
+                    <p class="card-text">{{ book.description|truncatechars:100 }}</p>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% empty %}
+    <p>Нет книг в каталоге.</p>
+    {% endfor %}
+</div>
+{% endblock %}

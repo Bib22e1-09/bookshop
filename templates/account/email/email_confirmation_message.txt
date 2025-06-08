@@ -1,0 +1,10 @@
+{% load account %}
+{% user_display user as user_display %}
+{% autoescape off %}
+Здравствуйте, {{ user_display }}!
+
+Для подтверждения email перейдите по ссылке:
+{{ activate_url }}
+
+Спасибо!
+{% endautoescape %}

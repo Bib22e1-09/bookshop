@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h2>Вход</h2>
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    <strong>Ошибка:</strong> Проверьте правильность введенных данных.
+                </div>
+            {% endif %}
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Войти</button>
+                <a href="{% url 'register' %}" class="btn btn-link">Регистрация</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

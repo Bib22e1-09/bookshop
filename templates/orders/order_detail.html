@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">Заказ №{{ order.id }}</h2>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <h5>Статус:</h5>
+                    <span class="badge bg-{{ order.status_color }} fs-6">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+                <div class="col-md-4">
+                    <h5>Дата доставки:</h5>
+                    <p class="fs-5">{{ order.delivery_date|date:"d.m.Y" }}</p>
+                </div>
+                <div class="col-md-4">
+                    <h5>Создан:</h5>
+                    <p class="fs-5">{{ order.created_at|date:"d.m.Y H:i" }}</p>
+                </div>
+            </div>
+
+            <h4 class="mb-3">Состав заказа:</h4>
+            {% if order.items.all %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Книга</th>
+                                <th>Количество</th>
+                                <th>Сумма</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.items.all %}
+                            <tr>
+                                <td>{{ item.book.title }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.total_price|floatformat:2 }} ₽</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-warning">Нет товаров в заказе.</div>
+            {% endif %}
+
+            <div class="mt-4">
+                <a href="{% url 'orders:orders' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> К списку заказов
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

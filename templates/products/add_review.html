@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+    <div class="row g-4">
+        <!-- Основная информация -->
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h1 class="card-title">{{ book.title }}</h1>
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="rating">
+                            {% with stars=book.average_rating|floatformat:0|add:0 %}
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= stars %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-secondary"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endwith %}
+                            <span class="text-muted">({{ book.average_rating|floatformat:1 }}/5)</span>
+                        </div>
+                        <span class="text-muted">({{ book.reviews.count }} отзывов)</span>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <p class="fs-5"><strong>Цена:</strong> {{ book.price|floatformat:2 }} ₽</p>
+                        </div>
+                        <div class="col-md-4">
+                            <p class="fs-5"><strong>В наличии:</strong> {{ book.stock }} шт.</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h4>Описание</h4>
+                        <p class="lead">{{ book.description }}</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Отзывы -->
+            <div class="card shadow mt-4">
+                <div class="card-body">
+                    <h3 class="mb-4">Отзывы покупателей</h3>             
+                    {% for review in book.reviews.all %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <h5 class="card-title mb-0">{{ review.user.username }}</h5>
+                                    <div class="rating small">
+                                        {% for i in "12345" %}
+                                            {% if forloop.counter <= review.rating %}
+                                                <i class="fas fa-star text-warning"></i>
+                                            {% else %}
+                                                <i class="far fa-star text-secondary"></i>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ review.created_at|date:"d.m.Y H:i" }}</small>
+                            </div>
+                            <p class="card-text">{{ review.comment }}</p>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="alert alert-info mb-0">Пока нет отзывов. Будьте первым!</div>
+                    {% endfor %}
+                    <!-- Форма добавления отзыва -->
+                    {% if user.is_authenticated %}
+                        <div class="mt-4">
+                            <h5 class="mb-3">Оставить отзыв</h5>
+                            <form method="post" action="{% url 'add_review' book.pk %}">
+                                {% csrf_token %}
+                                {{ form.as_p }}
+                                <button type="submit" class="btn btn-primary">Отправить отзыв</button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info mt-4">
+                            <a href="{% url 'login' %}?next={{ request.path }}" class="alert-link">Войдите</a>, чтобы оставить отзыв
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <!-- Боковая панель: действия -->
+        <div class="col-lg-4">
+            <div class="card shadow sticky-top">
+                <div class="card-body">
+                    {% if user.is_authenticated %}
+                        <!-- Корзина -->
+                        <div class="mb-4">
+                            <form method="post" action="{% url 'cart:add_to_cart' book.pk %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="fas fa-cart-plus"></i> Добавить в корзину
+                                </button>
+                            </form>                          
+                            {% if in_cart %}
+                            <form method="post" action="{% url 'cart:remove_from_cart' book.pk %}" class="mt-2">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-outline-danger w-100">
+                                    <i class="fas fa-trash"></i> Удалить из корзины
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                        <!-- Оформление заказа -->
+                        <div class="border-top pt-4">
+                            <h5 class="mb-3">Быстрый заказ</h5>
+                            <form method="post" action="{% url 'orders:create_order' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="book_id" value="{{ book.id }}">
+                                <div class="mb-3">
+                                    <label class="form-label">Дата доставки</label>
+                                    <input type="date" 
+                                           name="delivery_date" 
+                                           class="form-control" 
+                                           min="{% now 'Y-m-d' %}" 
+                                           required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-shopping-bag"></i> Оформить заказ
+                                </button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <a href="{% url 'login' %}?next={{ request.path }}" class="alert-link">Войдите</a>, 
+                            чтобы совершать покупки
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

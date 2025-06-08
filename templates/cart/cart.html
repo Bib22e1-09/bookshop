@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4">Корзина <i class="fas fa-shopping-cart"></i></h2>
+    
+    {% if cart_items %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Книга</th>
+                        <th class="d-none d-md-table-cell">Автор</th>
+                        <th class="d-none d-lg-table-cell">Год</th>
+                        <th>Цена</th>
+                        <th>Кол-во</th>
+                        <th>Сумма</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in cart_items %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'book_detail' item.book.pk %}" class="text-decoration-none">
+                                {{ item.book.title }}
+                            </a>
+                        </td>
+                        <td class="d-none d-md-table-cell">
+                            {% for author in item.book.authors.all %}
+                                <span class="badge bg-secondary">{{ author.full_name }}</span>
+                            {% endfor %}
+                        </td>
+                        <td class="d-none d-lg-table-cell">{{ item.book.year|default:"-" }}</td>
+                        <td>{{ item.book.price }} ₽</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <a href="{% url 'cart:decrement_cart' item.book.pk %}" 
+                                   class="btn btn-sm btn-outline-danger py-0">−</a>
+                                <span class="fs-5">{{ item.quantity }}</span>
+                                <a href="{% url 'cart:increment_cart' item.book.pk %}" 
+                                   class="btn btn-sm btn-outline-success py-0">+</a>
+                            </div>
+                        </td>
+                        <td>{{ item.total_price|floatformat:2 }} ₽</td>
+                        <td>
+                            <a href="{% url 'cart:remove_from_cart' item.book.pk %}" 
+                               class="btn btn-sm btn-danger" 
+                               title="Удалить">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-group-divider">
+                    <tr>
+                        <th colspan="5" class="text-end">Итого:</th>
+                        <th colspan="2">{{ total|floatformat:2 }} ₽</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-chevron-left"></i> Продолжить покупки
+            </a>
+            <button type="button" 
+                    class="btn btn-success" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#paymentModal">
+                <i class="fas fa-credit-card"></i> Оплатить {{ total|floatformat:2 }} ₽
+            </button>
+        </div>
+
+        <!-- Модальное окно оплаты -->
+        <div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Оплата картой</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="paymentForm" method="post" action="{% url 'cart:process_payment' %}">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label">Номер карты</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-credit-card"></i></span>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           name="card_number" 
+                                           placeholder="0000 0000 0000 0000"
+                                           data-mask="0000 0000 0000 0000"
+                                           required>
+                                </div>
+                            </div>
+                            
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Срок действия</label>
+                                    <input type="text" 
+                                           class="form-control" 
+                                           name="card_expiry" 
+                                           placeholder="MM/YY"
+                                           data-mask="00/00"
+                                           required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">CVC</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               name="card_cvc" 
+                                               placeholder="CVC"
+                                               data-mask="000"
+                                               required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-check-circle"></i> Подтвердить оплату
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="empty-cart-icon mb-4">
+                <i class="fas fa-shopping-cart fa-4x text-muted"></i>
+            </div>
+            <h4 class="mb-3">Ваша корзина пуста</h4>
+            <a href="{% url 'home' %}" class="btn btn-primary">
+                <i class="fas fa-book-open"></i> Перейти в каталог
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация масок ввода
+    const cards = document.querySelectorAll('[data-mask="0000 0000 0000 0000"]');
+    cards.forEach(card => {
+        card.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '')
+                .replace(/(\d{4})(?=\d)/g, '$1 ')
+                .trim();
+        });
+    });
+});
+</script>
+{% endblock %}
